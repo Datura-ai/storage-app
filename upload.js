@@ -1,14 +1,14 @@
-// Utilities
 function ID(id) { return document.getElementById(id); }
 function N1(t,e) { return e.getElementsByTagName(t)[0]; }
+// is this the live site or dev environment
+const live = window.location.hostname === 'filesafe.org';
 
-// Upload class
 var Up = {
-	// configurable URL of the file upload handler
-    // {'id': 1, 'url': 'https:...'}
-	url: 'ws://127.0.0.1:8000/store',
-	user_files_url: 'http://127.0.0.1:8000/files/',
-	// configurable HTML template to render each uploaded file
+    // URL of the file upload handler
+	url: live ? 'wss://filesafe.org/store' : 'ws://127.0.0.1:8000/store',
+	// URL serving list of user's files
+	user_files_url: live ? 'https://filesafe.org/files/' : 'http://127.0.0.1:8000/files/',
+	// HTML template to render each uploaded file
 	form_tpl: `<div class="upload__file">
         <div class="upload__file__wrap">
             <span class="upload__progress_bar"><i></i></span>
@@ -26,12 +26,9 @@ var Up = {
     `,
 	// device and browser capability tests
 	tests: {
-		// is filereader supported
-		filereader: typeof FileReader != 'undefined',
-		// is drag and drop supported
-		dnd: 'draggable' in document.createElement('span'),
-		// will progress bars work
-		progress: "upload" in new XMLHttpRequest
+		filereader: typeof FileReader != 'undefined', // is filereader supported
+		dnd: 'draggable' in document.createElement('span'), // is drag and drop supported
+		progress: "upload" in new XMLHttpRequest // will progress bars work
 	},
 	// handle adding file forms to a formset
 	add_form: function(i){
@@ -104,7 +101,7 @@ var Up = {
                 Up.addExt(id, file.name);
             }
             // prefill caption field with the filename
-            document.querySelector('#'+id+' .upload__file__caption input').value = file.name;
+            ID(id.replace('id', 'alt')).value = file.name;
             qs[i] = Up.post(i, data, id);
 		}
 		for(var j=0; j < qs.length; j++){
@@ -171,7 +168,7 @@ function sortable_uploads(){
 // Fire when DOM is ready
 document.addEventListener('readystatechange', function(){
     if(document.readyState === 'complete'){
-        const user_hash = localStorage.getItem('user_sha');
+        const user_hash = 'anonymous'; // localStorage.getItem('user_sha');
 		Up.load();
 		sortable_uploads();
 		fetchUserFiles(user_hash);  // Fetch and display already uploaded files
