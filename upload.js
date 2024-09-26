@@ -61,10 +61,14 @@ var Up = {
 		img.src = data.url;
 		ID('id'+id).value = data.id;
 	},
-	post: function(i, data, id){
+	post: function(i, data, id, filename){
+	    const caption = ID(id.replace('id', 'alt')).value;
+	    const user_hash = localStorage.getItem('user_sha') || 'anonymous';
+	    const metadata = JSON.stringify({filename: filename, caption: caption, user_hash: user_hash});
 		return function(){
 		    const socket = new WebSocket(Up.url);
             socket.onopen = function() {
+                socket.send(metadata);
                 socket.send(data.get('file'));
             };
             socket.onmessage = function(event) {
@@ -102,7 +106,7 @@ var Up = {
             }
             // prefill caption field with the filename
             ID(id.replace('id', 'alt')).value = file.name;
-            qs[i] = Up.post(i, data, id);
+            qs[i] = Up.post(i, data, id, file.name);
 		}
 		for(var j=0; j < qs.length; j++){
 			qs[j](); // run requests
