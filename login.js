@@ -1,3 +1,4 @@
+function ID(id) { return document.getElementById(id); }
 const dialog   = ID('login_dialog');
 const btn_open = ID('login_open');
 const btn_shut = ID('login_shut');
@@ -33,6 +34,7 @@ btn_save.addEventListener('click', function() {
         ID('login_prompt').innerText = uname;
         ID('logout').style.display = 'inline';
         dialog.close();
+        fetchUserFiles(uname);
     } else {
         ID('login_error').innerText ='Please enter your key or username.';
     }

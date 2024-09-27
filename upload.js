@@ -15,7 +15,7 @@ var Up = {
             <img class="upload__file__thumb" src="#thumb#">
         </div>
         <div>
-            <label class="upload__delete" title="Mark for deletion">
+            <label class="upload__delete" title="Delete forever">
                 &times; <input type="checkbox" name="delete" id="deleteSUFFIX">
             </label>
         </div>
@@ -31,7 +31,7 @@ var Up = {
 		progress: "upload" in new XMLHttpRequest // will progress bars work
 	},
 	// handle adding file forms to a formset
-	add_form: function(i){
+	add_form: function(file_hash){
 		var list = ID('upload_list');
 		var total = document.querySelectorAll('input[name="delete"]').length;
 		var form = Up.form_tpl.replace(/SUFFIX/g, total),
@@ -42,25 +42,36 @@ var Up = {
 		form.id = id;
 		list.appendChild(form);
 		sortable_uploads();
-		Up.setup_delete(ID("delete"+total));
+		Up.setup_delete(ID("delete"+total), file_hash);
 		return id;
 	},
-	setup_delete: function(btn) {
-        btn.addEventListener('change', function() {
-            if (this.checked) {
-                var fileDiv = this.closest('.upload__file');
-                fileDiv.parentNode.removeChild(fileDiv);
-                // handle server-side deletion
-            }
-        });
-    },
-	fill_form: function(id, xhr_response){
-		var data = JSON.parse(xhr_response); // safe source
+	fill_form: function(id, resp){
+		var data = JSON.parse(resp); // safe source
 		var box = ID(id);
 		var img = N1('img', box);
 		img.src = data.url;
-		ID('id'+id).value = data.id;
+		ID(id).value = data.file_hash;
+        Up.setup_delete(ID(id.replace('id', 'delete')), data.file_hash);
 	},
+	setup_delete: function(btn, file_hash) {
+	    if(file_hash === undefined) return;
+        btn.addEventListener('change', async function() {
+            if (this.checked) {
+                var fileDiv = this.closest('.upload__file');
+                const user_hash = localStorage.getItem('user_sha') ;
+                const delete_url = `${Up.user_files_url}${user_hash}/${file_hash}`;
+                try {
+                    const response = await fetch(delete_url, { method: 'DELETE' });
+                    if (!response.ok) {
+                        throw new Error('Error deleting file from server');
+                    }
+                    fileDiv.parentNode.removeChild(fileDiv);
+                } catch (error) {
+                    console.error("Failed to delete file:", error);
+                }
+            }
+        });
+    },
 	post: function(i, data, id, filename){
 	    const caption = ID(id.replace('id', 'alt')).value;
 	    const user_hash = localStorage.getItem('user_sha') || 'anonymous';
@@ -193,7 +204,7 @@ async function fetchUserFiles(user_hash) {
 }
 
 function displayFile(file) {
-    var id = Up.add_form();
+    var id = Up.add_form(file.file_hash);
     Up.addExt(id, file.file_name);
     // TODO show thumbnail
     // var img = N1('img', ID(id));
