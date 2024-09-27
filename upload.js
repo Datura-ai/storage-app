@@ -172,7 +172,7 @@ function sortable_uploads(){
 // Fire when DOM is ready
 document.addEventListener('readystatechange', function(){
     if(document.readyState === 'complete'){
-        const user_hash = 'anonymous'; // localStorage.getItem('user_sha');
+        const user_hash = localStorage.getItem('user_sha');
 		Up.load();
 		sortable_uploads();
 		fetchUserFiles(user_hash);  // Fetch and display already uploaded files
@@ -194,9 +194,10 @@ async function fetchUserFiles(user_hash) {
 
 function displayFile(file) {
     var id = Up.add_form();
-    Up.addExt(id, '.encrypted'); // TODO show decrypted extension or thumbnail and caption
+    Up.addExt(id, file.file_name);
+    // TODO show thumbnail
     // var img = N1('img', ID(id));
     // img.src = file.url || "spinner.gif";
     ID(id).value = file.id;
-    ID(id.replace('id', 'alt')).value = file.file_hash;
+    ID(id.replace('id', 'alt')).value = file.caption;
 }
