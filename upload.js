@@ -19,10 +19,10 @@ var Up = {
                 &times; <input type="checkbox" name="delete" id="deleteSUFFIX">
             </label>
         </div>
-        <div class="upload__file_name" id="fnSUFFIX"></div>
+        <a class="upload__file_name" id="fnSUFFIX"></a>
         <div class="upload__file__caption"><input type="text" id="altSUFFIX" name="altSUFFIX" placeholder="Enter caption"></div>
         <input type="hidden" id="posSUFFIX" name="posSUFFIX">
-        <input type="hidden" id="idSUFFIX" name="idSUFFIX">
+        <input type="hidden" id="hashSUFFIX" name="hashSUFFIX">
     </div>
     `,
 	// device and browser capability tests
@@ -243,7 +243,8 @@ function displayFile(file) {
     // TODO show thumbnail
     // var img = N1('img', ID(id));
     // img.src = file.url || "spinner.gif";
-    ID(id).value = file.id;
+    ID(id.replace('id', 'hash')).value = file.file_hash;
     ID(id.replace('id', 'alt')).value = file.caption;
     ID(id.replace('id', 'fn')).textContent = file.file_name;
+    ID(id.replace('id', 'fn')).href = `${Up.user_files_url}${file.user_hash}${file.file_hash}`;
 }
