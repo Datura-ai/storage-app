@@ -19,7 +19,8 @@ var Up = {
                 &times; <input type="checkbox" name="delete" id="deleteSUFFIX">
             </label>
         </div>
-        <div class="upload__file__caption"><input type="text" id="altSUFFIX" name="altSUFFIX"></div>
+        <div class="upload__file_name" id="fnSUFFIX"></div>
+        <div class="upload__file__caption"><input type="text" id="altSUFFIX" name="altSUFFIX" placeholder="Enter caption"></div>
         <input type="hidden" id="posSUFFIX" name="posSUFFIX">
         <input type="hidden" id="idSUFFIX" name="idSUFFIX">
     </div>
@@ -42,39 +43,23 @@ var Up = {
 		form.id = id;
 		list.appendChild(form);
 		sortable_uploads();
-		Up.setup_delete(ID("delete"+total), file_hash);
+		setup_delete(ID("delete"+total), file_hash);
+		setup_update(ID("alt"+total), file_hash);
 		return id;
 	},
 	fill_form: function(id, data){
 		var box = ID(id);
 		var img = N1('img', box);
-		img.src = data.url;
+		var i = id.replace('id', '')
+		// img.src = data.url;
 		ID(id).value = data.file_hash;
-        Up.setup_delete(ID(id.replace('id', 'delete')), data.file_hash);
+        setup_delete(ID('delete'+i), data.file_hash);
+		setup_update(ID('alt'+i), data.file_hash);
 	},
-	setup_delete: function(btn, file_hash) {
-	    if(file_hash === undefined) return;
-        btn.addEventListener('change', async function() {
-            if (this.checked) {
-                var fileDiv = this.closest('.upload__file');
-                const user_hash = localStorage.getItem('user_sha') ;
-                const delete_url = `${Up.user_files_url}${user_hash}/${file_hash}`;
-                try {
-                    const response = await fetch(delete_url, { method: 'DELETE' });
-                    if (!response.ok) {
-                        throw new Error('Error deleting file from server');
-                    }
-                    fileDiv.parentNode.removeChild(fileDiv);
-                } catch (error) {
-                    console.error("Failed to delete file:", error);
-                }
-            }
-        });
-    },
-	post: function(i, data, id, filename){
+	post: function(i, data, id, fn){
 	    const caption = ID(id.replace('id', 'alt')).value;
 	    const user_hash = localStorage.getItem('user_sha') || 'anonymous';
-	    const metadata = JSON.stringify({filename: filename, caption: caption, user_hash: user_hash});
+	    const metadata = JSON.stringify({file_name: fn, caption: caption, user_hash: user_hash});
 		return function(){
 		    const socket = new WebSocket(Up.url);
             socket.onopen = function() {
@@ -116,8 +101,7 @@ var Up = {
             } else {  // or display extension
                 Up.addExt(id, file.name);
             }
-            // prefill caption field with the filename
-            ID(id.replace('id', 'alt')).value = file.name;
+            ID(id.replace('id', 'fn')).textContent = file.name;
             qs[i] = Up.post(i, data, id, file.name);
 		}
 		for(var j=0; j < qs.length; j++){
@@ -180,6 +164,55 @@ function sortable_uploads(){
     });
 }
 
+function setup_delete(btn, file_hash) {
+    const user_hash = localStorage.getItem('user_sha') ;
+    const delete_url = `${Up.user_files_url}${user_hash}/${file_hash}`;
+    if(file_hash === undefined) return;
+    btn.addEventListener('change', async function() {
+        if (this.checked) {
+            var fileDiv = this.closest('.upload__file');
+            try {
+                const response = await fetch(delete_url, { method: 'DELETE' });
+                if (!response.ok) {
+                    throw new Error('Error deleting file from server');
+                }
+                fileDiv.parentNode.removeChild(fileDiv);
+            } catch (error) {
+                console.error("Failed to delete file:", error);
+            }
+        }
+    });
+}
+
+function setup_update(input, file_hash) {
+    const user_hash = localStorage.getItem('user_sha');
+    const update_url = `${Up.user_files_url}${user_hash}/${file_hash}`;
+    let timer;
+    input.addEventListener('input', function() {
+        clearTimeout(timer);
+        timer = setTimeout(async () => {
+            const caption = input.value;
+            try {
+                const response = await fetch(update_url, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ caption: caption })
+                });
+                if (!response.ok) {
+                    throw new Error('Error updating');
+                }
+                console.log("Update saved");
+            } catch (error) {
+                console.error("Failed to update:", error);
+            }
+        }, 800); // 800ms after user stops typing
+    });
+
+    // Reset timer if user continues typing
+    input.addEventListener('keydown', function() {
+        clearTimeout(timer);
+    });
+}
+
 
 // Fire when DOM is ready
 document.addEventListener('readystatechange', function(){
@@ -212,4 +245,5 @@ function displayFile(file) {
     // img.src = file.url || "spinner.gif";
     ID(id).value = file.id;
     ID(id.replace('id', 'alt')).value = file.caption;
+    ID(id.replace('id', 'fn')).textContent = file.file_name;
 }

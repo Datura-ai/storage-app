@@ -14,7 +14,7 @@
 .upload__delete{position:absolute;right:11px;top:1px;color:black;background:rgba(255,255,255,.5);font-size:20px;padding:0 .3rem;display:inline-block}
 .upload__delete input{display:none}
 .upload__file__ext{font-size:20px;padding-top:5rem;background:white}
-
+.upload__file_name{position:absolute;width:170px;padding:3px 5px;bottom:35px;left:1px;background:rgba(255,255,255,.5);font-size:smaller;color:#555}
 dialog{border:1px solid gray;border-radius:2px;padding:1.5rem}
 dialog p{margin-top:0}
 dialog a{outline:none}
