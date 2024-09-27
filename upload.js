@@ -45,8 +45,7 @@ var Up = {
 		Up.setup_delete(ID("delete"+total), file_hash);
 		return id;
 	},
-	fill_form: function(id, resp){
-		var data = JSON.parse(resp); // safe source
+	fill_form: function(id, data){
 		var box = ID(id);
 		var img = N1('img', box);
 		img.src = data.url;
@@ -83,11 +82,13 @@ var Up = {
                 socket.send(data.get('file'));
             };
             socket.onmessage = function(event) {
-                var resp = event.data;  // Handle the response from the server
-                if (resp === 'error') {
+                var resp = JSON.parse(event.data);
+                if (resp.status === 'error') {
+                    // Handle errors
                     var box = ID(id);
                     box.parentNode.removeChild(box);
                 } else {
+                    // Handle success
                     Up.fill_form(id, resp); // Update the UI
                 }
             };
